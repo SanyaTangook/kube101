@@ -1,0 +1,164 @@
+# ตัวอย่าง HorizontalPodAutoscaler (HPA)
+# HPA ใช้สำหรับ auto-scaling จำนวน Pod ตามปริมาณ resource usage
+
+---
+# Deployment สำหรับใช้ร่วมกับ HPA
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hpa-demo
+  namespace: default
+spec:
+  replicas: 2  # จำนวน Pod เริ่มต้น
+  selector:
+    matchLabels:
+      app: hpa-app
+  template:
+    metadata:
+      labels:
+        app: hpa-app
+    spec:
+      containers:
+      - name: app
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        
+        # ต้องมี Resource Requests เพื่อให้ HPA คำนวณ percentage ได้
+        resources:
+          requests:
+            cpu: 100m        # ขอ 100 millicores
+            memory: 128Mi
+          limits:
+            cpu: 200m        # จำกัด 200 millicores
+            memory: 256Mi
+
+---
+# HPA ตามการใช้ CPU
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-cpu
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hpa-demo
+  
+  minReplicas: 2      # จำนวน Pod น้อยที่สุด
+  maxReplicas: 10     # จำนวน Pod มากที่สุด
+  
+  metrics:
+  # metric ตามการใช้ CPU
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70  # เมื่อ CPU > 70% ให้ scale up
+  
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # รอ 5 นาทีก่อน scale down
+      policies:
+      - type: Percent
+        value: 50              # ลดลง 50% ต่อครั้ง
+        periodSeconds: 15
+    
+    scaleUp:
+      stabilizationWindowSeconds: 0    # scale up ทันที
+      policies:
+      - type: Percent
+        value: 100             # เพิ่ม 100% ต่อครั้ง
+        periodSeconds: 15
+
+---
+# HPA ตามการใช้ Memory และ CPU
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-multi-metric
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hpa-demo
+  
+  minReplicas: 2
+  maxReplicas: 15
+  
+  metrics:
+  # Scale based on CPU utilization
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  
+  # Scale based on Memory utilization
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80  # เมื่อ Memory > 80%
+
+---
+# HPA ตามคลาสดูตั้งเอง (Custom Metric)
+# ต้องติดตั้ง Metrics Server และ Custom Metrics API ก่อน
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-custom-metric
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hpa-demo
+  
+  minReplicas: 1
+  maxReplicas: 20
+  
+  metrics:
+  # Custom metric จาก Prometheus
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: 1000  # ค่าเฉลี่ย 1000 requests/sec ต่อ Pod
+
+---
+# HPA สำหรับ External Metrics
+# เช่น metrics จาก SQS queue depth
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-external-metric
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hpa-demo
+  
+  minReplicas: 1
+  maxReplicas: 25
+  
+  metrics:
+  # External metric (เช่น AWS SQS queue depth)
+  - type: External
+    external:
+      metric:
+        name: sqs_queue_depth
+        selector:
+          matchLabels:
+            queue_name: task-queue
+      target:
+        type: AverageValue
+        averageValue: 30  # ค่าเฉลี่ย 30 messages ต่อ Pod

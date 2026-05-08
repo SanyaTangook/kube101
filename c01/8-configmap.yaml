@@ -1,0 +1,102 @@
+# ตัวอย่าง ConfigMap
+# ConfigMap ใช้เก็บ configuration data ที่ไม่ลับ
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: default
+data:
+  # Key-value pairs สำหรับ config
+  app.properties: |
+    server.port=8080
+    server.timeout=30
+    database.host=db.example.com
+    database.port=5432
+  
+  # ไฟล์ JSON
+  config.json: |
+    {
+      "version": "1.0",
+      "environment": "production",
+      "debug": false
+    }
+  
+  # ตัวแปร environment
+  LOG_LEVEL: "INFO"
+  CACHE_ENABLED: "true"
+
+---
+# Deployment ที่ใช้ ConfigMap ผ่าน Environment Variables
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-with-config
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: configurable-app
+  template:
+    metadata:
+      labels:
+        app: configurable-app
+    spec:
+      containers:
+      - name: app
+        image: nginx:latest
+        ports:
+        - containerPort: 8080
+        
+        # วิธี 1: ใช้ environment variables จาก ConfigMap
+        env:
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: LOG_LEVEL
+        - name: CACHE_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: CACHE_ENABLED
+        
+        # วิธี 2: ใช้ทั้ง ConfigMap เป็น environment variables
+        envFrom:
+        - configMapRef:
+            name: app-config
+        
+        # วิธี 3: Mount ConfigMap เป็น volume (file)
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+          readOnly: true
+      
+      volumes:
+      - name: config-volume
+        configMap:
+          name: app-config
+          items:
+          - key: app.properties
+            path: app.properties
+          - key: config.json
+            path: config.json
+
+---
+# ConfigMap สำหรับ nginx config
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: default
+data:
+  nginx.conf: |
+    server {
+      listen 80;
+      server_name _;
+      
+      location / {
+        proxy_pass http://backend:8080;
+        proxy_set_header Host $host;
+      }
+    }

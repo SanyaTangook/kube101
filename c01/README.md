@@ -93,6 +93,73 @@ kubectl get ingress
 kubectl describe ingress nginx-ingress
 ```
 
+### 8. ConfigMap (8-configmap.yaml)
+- เก็บ configuration data ที่ไม่ลับ
+- สามารถใช้เป็น environment variables หรือ files
+- ใช้สำหรับ app configuration, config files
+
+**ประเภทการใช้:**
+- Environment variables จาก ConfigMap
+- Mount ConfigMap เป็น volume
+- envFrom - ใช้ทั้ง ConfigMap
+
+**คำสั่ง:**
+```bash
+kubectl apply -f 8-configmap.yaml
+kubectl get configmap
+kubectl describe cm app-config
+kubectl get cm app-config -o yaml
+```
+
+### 9. Secret (9-secret.yaml)
+- เก็บ sensitive data เช่น password, token, API keys
+- ค่า base64 encoded (ไม่ใช่ encryption)
+- 6 ประเภท: Opaque, docker-cfg, TLS, SSH, basic-auth, service-account-token
+
+**ประเภท Secret:**
+- **Opaque**: arbitrary data (default)
+- **kubernetes.io/dockercfg**: Docker config
+- **kubernetes.io/tls**: TLS certificates
+- **kubernetes.io/ssh-auth**: SSH private key
+- **kubernetes.io/basic-auth**: Basic authentication
+
+**คำสั่ง:**
+```bash
+kubectl apply -f 9-secret.yaml
+kubectl get secrets
+kubectl describe secret app-secrets
+# ดูค่า (base64 decoded)
+kubectl get secret app-secrets -o jsonpath='{.data.password}' | base64 -d
+# สร้าง Secret จาก CLI
+kubectl create secret generic my-secret --from-literal=key=value
+```
+
+### 10. HPA (10-hpa.yaml)
+- HorizontalPodAutoscaler - auto-scaling จำนวน Pod
+- ปรับ replica ตามปริมาณ resource usage หรือ custom metrics
+- ต้องติดตั้ง Metrics Server ก่อน
+
+**ประเภท Scaling:**
+- **Resource Metrics**: CPU, Memory utilization
+- **Custom Metrics**: Application-specific metrics
+- **External Metrics**: สำหรับ external systems เช่น queue depth
+
+**ความต้องการ:**
+- Pod ต้องมี Resource Requests
+- Metrics Server ต้องติดตั้งใน cluster
+- หากใช้ custom metrics ต้องติดตั้ง Custom Metrics API
+
+**คำสั่ง:**
+```bash
+# ติดตั้ง Metrics Server (minikube)
+minikube addons enable metrics-server
+
+kubectl apply -f 10-hpa.yaml
+kubectl get hpa
+kubectl describe hpa hpa-cpu
+kubectl get hpa -w  # watch HPA status
+```
+
 ## 🚀 วิธีใช้ทั้งหมด
 
 ```bash
@@ -102,32 +169,38 @@ kubectl apply -f .
 # ดูทุก resources
 kubectl get all
 kubectl get pv,pvc,sc
-
-# ลบทั้งหมด
-kubectl delete -f .
+kubectl get cm,secret
+kubectl get hpa
 ```
 
 ## 📊 ความสัมพันธ์
 
 ```
-StorageClass (SC)
-    ↓
-PersistentVolume (PV) ← Dynamic Provisioning
-    ↓
-PersistentVolumeClaim (PVC)
-    ↓
-Pod/Deployment
-    ↓
-Service
-    ↓
-Ingress
+┌─ StorageClass (SC)
+│   ↓
+├─ PersistentVolume (PV) ← Dynamic Provisioning
+│   ↓
+├─ PersistentVolumeClaim (PVC)
+│   ↓
+├─ Pod / Deployment ← ConfigMap, Secret
+│   ↓
+├─ HPA (auto-scaling)
+│   ↓
+├─ Service
+│   ↓
+└─ Ingress
 ```
 
 ## 📝 บันทึก
+
 - แต่ละไฟล์มีความเป็นอิสระและสามารถใช้ได้แยกกัน
 - ปรับเปลี่ยน namespace, names, images ตามต้องการ
 - เสมอใช้ `kubectl apply` แทน `kubectl create` เพื่อให้ใช้ได้ซ้ำๆ
+- Secret ต้องจัดการด้วยความระมัดระวัง - ไม่ควร commit ใน git
 
 ## 🔗 ลิงก์อ้างอิง
 - [Kubernetes Official Docs](https://kubernetes.io/docs/)
 - [API Reference](https://kubernetes.io/docs/reference/kubernetes-api/)
+- [ConfigMap](https://kubernetes.io/docs/concepts/configuration/configmap/)
+- [Secret](https://kubernetes.io/docs/concepts/configuration/secret/)
+- [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
