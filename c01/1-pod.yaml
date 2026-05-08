@@ -1,0 +1,23 @@
+# ตัวอย่าง Pod พื้นฐาน
+# Pod คือหน่วยเล็กที่สุดใน Kubernetes
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  namespace: default
+  labels:
+    app: nginx
+spec:
+  containers:
+    - name: nginx
+      image: nginx:latest
+      ports:
+        - containerPort: 80
+          name: http
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "250m"
+        limits:
+          memory: "128Mi"
+          cpu: "500m"

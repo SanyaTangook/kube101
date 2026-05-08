@@ -1,0 +1,33 @@
+# ตัวอย่าง PersistentVolume (PV)
+# PV คือ resource ที่เป็น storage ในระดับ cluster
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-data
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce  # เฉพาะ 1 Node เท่านั้น
+    # - ReadWriteMany  # หลาย Node สามารถเขียนได้
+    # - ReadOnlyMany   # หลาย Node อ่านอย่างเดียว
+  persistentVolumeReclaimPolicy: Retain  # ล้าง / ลบ / Recycle
+  storageClassName: fast-storage
+  hostPath:
+    path: /mnt/data  # Path บน Node
+
+---
+# PersistentVolume ประเภท NFS
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: 192.168.1.100
+    path: "/exported/data"

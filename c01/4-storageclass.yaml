@@ -1,0 +1,22 @@
+# ตัวอย่าง StorageClass
+# StorageClass ใช้กำหนดวิธีการ dynamic provisioning ของ PersistentVolume
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-storage
+provisioner: kubernetes.io/aws-ebs  # ใช้ AWS EBS
+parameters:
+  type: gp2  # General Purpose SSD
+  iops: "100"
+  encrypted: "true"
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer  # Bind เมื่อมี Pod ใช้
+
+---
+# StorageClass ประเภท local
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer

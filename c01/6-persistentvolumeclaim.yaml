@@ -1,0 +1,44 @@
+# ตัวอย่าง PersistentVolumeClaim (PVC)
+# PVC คือการขอ storage จาก Pod
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: fast-storage
+  resources:
+    requests:
+      storage: 5Gi  # ขอ 5GB
+
+---
+# Deployment ที่ใช้ PVC
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-with-storage
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-app
+  template:
+    metadata:
+      labels:
+        app: data-app
+    spec:
+      containers:
+      - name: app
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: data-volume
+          mountPath: /data  # Path ที่ mount ใน container
+      volumes:
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: my-pvc
