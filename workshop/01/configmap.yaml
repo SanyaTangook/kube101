@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pos-config
+  namespace: default
+data:
+  DB_HOST: "159.223.87.32"
+  DB_PORT: "5432"
+  DB_USER: "demo1"
+  DB_PASSWORD: "WQmpIKZHq-pJrV7iQ6fj"
+  DB_NAME: "pos"
+  DB_SSLMODE: "disable"
+  APP_HOST : "0.0.0.0"
+  APP_PORT : "8080"

@@ -3,16 +3,19 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: nginx-pod
+  name: backend-pod
   namespace: default
   labels:
-    app: nginx
+    app: pos-backend
 spec:
   containers:
-    - name: nginx
-      image: nginx:trixie-perl
+    - envFrom:
+       - configMapRef:
+          name: pos-config
+      name: pos-backend
+      image: pos-backend:1.0 
       ports:
-        - containerPort: 80
+        - containerPort: 8080
           name: http
       resources:
         requests:

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: b-service
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: pos-backend
+  ports:
+  - protocol: TCP
+    port: 8080         # Port ของ Service
+    targetPort: 8080   # Port ของ Pod
+    name: http
