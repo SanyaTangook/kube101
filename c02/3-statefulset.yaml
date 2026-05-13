@@ -1,0 +1,38 @@
+# ตัวอย่าง StatefulSet
+# StatefulSet ใช้สำหรับ stateful applications ที่ต้องการ stable identity
+# เช่น ฐานข้อมูล (MySQL, PostgreSQL), ZooKeeper, Kafka
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web-statefulset
+  namespace: default
+  labels:
+    app: web
+spec:
+  replicas: 3
+  serviceName: web-headless
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.14.2
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: www
+              mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+    - metadata:
+        name: www
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
