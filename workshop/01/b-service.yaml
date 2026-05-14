@@ -4,11 +4,12 @@ metadata:
   name: b-service
   namespace: default
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: pos-backend
   ports:
   - protocol: TCP
     port: 8080         # Port ของ Service
     targetPort: 8080   # Port ของ Pod
+    nodePort: 30081    # Port ที่ browser เข้าถึงได้
     name: http

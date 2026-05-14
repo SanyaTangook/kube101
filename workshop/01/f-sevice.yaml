@@ -4,11 +4,12 @@ metadata:
   name: f-service
   namespace: default
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: pos-frontend
   ports:
   - protocol: TCP
-    port: 8080         # Port ของ Service
+    port: 8080         # Port ของ Service (ภายใน cluster)
     targetPort: 3000   # Port ของ Pod
+    nodePort: 30080    # Port ที่เปิดบน Node (ต้องอยู่ในช่วง 30000-32767)
     name: http

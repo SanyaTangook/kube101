@@ -10,7 +10,10 @@ metadata:
 spec:
   containers:
     - name: pos-frontend
-      image: frontend:1.1 
+      image: frontend:1.2 
+      envFrom:
+        - configMapRef:
+            name: pos-config
       ports:
         - containerPort: 3000
           name: http

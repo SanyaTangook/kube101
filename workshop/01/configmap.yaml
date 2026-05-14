@@ -12,3 +12,6 @@ data:
   DB_SSLMODE: "disable"
   APP_HOST : "0.0.0.0"
   APP_PORT : "8080"
+  # หมายเหตุ: SPA จะ bake API URL เข้า bundle ตอน build image
+  # ค่านี้จึงถูกอ่านจาก browser ไม่ได้ ต้องตั้ง URL ที่ browser resolve ได้
+  # (ดู AGENTS.md / README สำหรับวิธีตั้ง /etc/hosts + kubectl port-forward)
